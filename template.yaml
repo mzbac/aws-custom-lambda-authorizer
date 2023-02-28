@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  aws-lambda-authorizer
+
+  Sample SAM Template for aws-lambda-authorizer
+  
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  API:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      Auth:
+        DefaultAuthorizer: MyLambdaAuthorizer
+        Authorizers:
+          MyLambdaAuthorizer:
+            FunctionArn: !GetAtt AuthorizerFunction.Arn
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: src/
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      Events:
+        HelloWorld:
+          Type: Api 
+          Properties:
+            RestApiId: !Ref API
+            Path: /hello
+            Method: get
+    Metadata: 
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints: 
+        - app.ts
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: authorizer.handler
+      Runtime: nodejs18.x
+    Metadata: 
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - authorizer.ts
